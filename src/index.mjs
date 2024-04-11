@@ -80,7 +80,6 @@ app.get("/api/products", (request, response) => {
 app.post("/api/users", (request, response) => {
   const { body } = request;
   const newuser = { id: mockData[mockData.length - 1].id + 1, ...body };
-  console.log(newuser);
   mockData.push(newuser);
   return response.status(201).send(mockData);
 });
@@ -93,36 +92,19 @@ app.put("/api/users/:id",resolveIndexByUserId, (request, response) => {
   return response.status(201).send(mockData);
 });
 
-app.patch("/api/users/:id", (request, response) => {
+app.patch("/api/users/:id",resolveIndexByUserId, (request, response) => {
   const {
     body,
-    params: { id },
+    findUser,
   } = request;
-  const paredId = parseInt(id);
-
-  if (isNaN(paredId)) return response.sendStatus(400);
-
-  const findAlterIndex = mockData.findIndex((user) => user.id === paredId);
-  if (findAlterIndex === -1) return response.statusCode(404);
-
-  mockData[findAlterIndex] = { ...mockData[findAlterIndex], ...body };
+  mockData[findUser] = { ...mockData[findUser], ...body };
   return response.status(200).send(mockData);
 });
 
-app.delete("/api/users/:id", (request, response) => {
-  const {
-    params: { id },
-  } = request;
+app.delete("/api/users/:id",resolveIndexByUserId, (request, response) => {
+const {findUser } =request;
 
-  const paredId = parseInt(id);
-
-  if (isNaN(paredId)) return response.status(400);
-
-  const findeIndex = mockData.findIndex((user) => user.id === paredId);
-
-  if (findeIndex === -1) return response.status(404);
-
-  mockData.splice(findeIndex);
+  mockData.splice(findUser);
   return response.status(200).send(mockData);
 });
 
