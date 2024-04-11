@@ -4,7 +4,6 @@ const app = express();
 
 app.use(express.json());
 
-
 const PORT = process.env.PORT || 3000;
 
 const mockData = [
@@ -14,13 +13,26 @@ const mockData = [
   { id: 4, username: "Renol", displayname: "Renolms" },
 ];
 
-const loggingMiddleware = (request,response,next) =>{
+const loggingMiddleware = (request, response, next) => {
   console.log(`${request.method} - ${request.url}`);
   //here we can have complex logic
   next();
+};
+app.use(loggingMiddleware); //this middleware availabel for all the routes below this;
 
-}
-app.use(loggingMiddleware);//this middleware availabel for all the routes below this;
+const resolveIndexByUserId = (request, response, next) => {
+  const {
+    params: { id },
+  } = request;
+  const parsedId = parseInt(id);
+  if (isNaN(parsedId)) return response.sendStatus(400);
+
+  const findUser = mockData.findIndex((user) => user.id === parsedId);
+
+  if (findUser === -1) return response.sendStatus(404);
+  request.findUser = findUser;
+  next();
+};
 
 app.get("/", (req, res) => {
   res.status(201).send(`<h1>Welcome to my page have a great time</h1>`);
@@ -39,10 +51,12 @@ app.get("/api/users", (req, res) => {
   return res.send(mockData);
 });
 
-app.use((req,res,next)=>{
-console.log(`This middleware will only available for routes which are below this `);
-next();
-})
+app.use((req, res, next) => {
+  console.log(
+    `This middleware will only available for routes which are below this `
+  );
+  next();
+});
 //we can have multiple middleware like this order of invocing the MW matters
 
 app.get("/api/users/:id", (req, res) => {
@@ -64,7 +78,6 @@ app.get("/api/products", (request, response) => {
 });
 
 app.post("/api/users", (request, response) => {
-  console.log("called");
   const { body } = request;
   const newuser = { id: mockData[mockData.length - 1].id + 1, ...body };
   console.log(newuser);
@@ -72,20 +85,11 @@ app.post("/api/users", (request, response) => {
   return response.status(201).send(mockData);
 });
 
-app.put("/api/users/:id", (request, response) => {
+app.put("/api/users/:id",resolveIndexByUserId, (request, response) => {
   const {
-    body,
-    params: { id },
+    body,findUser
   } = request;
-  const parsedId = parseInt(id);
-  if (isNaN(parsedId)) return response.sendStatus(400);
-
-  const findUser = mockData.findIndex((user) => user.id === parsedId);
-
-  if (findUser === -1) return response.sendStatus(404);
-
-  mockData[findUser] = { id: parsedId, ...body };
-
+  mockData[findUser] = { id: mockData[findUser].id, ...body };
   return response.status(201).send(mockData);
 });
 
@@ -112,15 +116,15 @@ app.delete("/api/users/:id", (request, response) => {
 
   const paredId = parseInt(id);
 
-  if(isNaN(paredId)) return response.status(400);
+  if (isNaN(paredId)) return response.status(400);
 
   const findeIndex = mockData.findIndex((user) => user.id === paredId);
 
-  if(findeIndex === -1) return response.status(404);
+  if (findeIndex === -1) return response.status(404);
 
   mockData.splice(findeIndex);
   return response.status(200).send(mockData);
-})
+});
 
 app.listen(PORT, () => {
   console.log(`Sever started at port ${PORT}`);
