@@ -1,5 +1,6 @@
 import express, { json, request, response } from "express";
-import { body, matchedData, query, validationResult } from "express-validator";
+import { body, checkSchema, matchedData, query, validationResult } from "express-validator";
+import { createUserValidationSchema } from "./utils/validationSchema.mjs";
 
 const app = express();
 
@@ -41,11 +42,8 @@ app.get("/", (req, res) => {
 
 app.get(
   "/api/users",
-  query("filter")
-    .notEmpty()
-    .withMessage("Cant be empty")
-    .isLength({ min: 3, max: 10 })
-    .withMessage("Must be 3-10 char"),
+  checkSchema(createUserValidationSchema),
+
   (req, res) => {
     const result = validationResult(req);
     console.log(result.errors);
@@ -91,18 +89,7 @@ app.get("/api/products", (request, response) => {
 
 app.post(
   "/api/users",
-  [body("username")
-    .notEmpty()
-    .withMessage("payload cant be empty")
-    .isString()
-    .withMessage("Please enter a valid string"),
-  body("displayname")
-    .notEmpty()
-    .withMessage("displayname cant be empty")
-    .isString()
-    .withMessage("Please enter a valid string")
-    .isLength({ max: 32 })
-    .withMessage("max length should be 32")],
+  checkSchema(createUserValidationSchema),
   (request, response) => {
     const postresult = validationResult(request);
     console.log(postresult);
